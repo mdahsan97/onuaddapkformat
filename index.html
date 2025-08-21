@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONU ADD SCRIPT</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Roboto:wght@700&display=swap');
+        
+        body {
+            font-family: "Trebuchet MS", Trebuchet MS;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s; /* Smooth transition for theme change */
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #333, #555);
+            color: #eee;
+        }
+        body.dark-mode h1 {
+            color: #a7d129; /* Dark mode green */
+        }
+        body.dark-mode .panel-header {
+            color: #a7d129; /* Dark mode green */
+            border-bottom: 1px solid #666;
+        }
+        body.dark-mode .panel,
+        body.dark-mode .input-group input,
+        body.dark-mode .input-group select,
+        body.dark-mode #output-script {
+            background-color: #444;
+            color: #eee;
+            border-color: #666;
+        }
+        body.dark-mode .input-group label {
+            color: #ccc;
+        }
+        body.dark-mode #copy-btn,
+        body.dark-mode #generate-btn,
+        body.dark-mode #clear-btn {
+            color: #eee;
+            box-shadow: 0 2px 4px rgba(255,255,255,0.2);
+        }
+        body.dark-mode #generate-btn {
+            background-color: #689f38;
+        }
+        body.dark-mode #generate-btn:hover {
+            background-color: #558b2f;
+        }
+        body.dark-mode #clear-btn {
+            background-color: #d32f2f;
+        }
+        body.dark-mode #clear-btn:hover {
+            background-color: #c62828;
+        }
+        body.dark-mode #copy-btn {
+            background-color: #1e88e5;
+        }
+        body.dark-mode #copy-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .theme-toggle button {
+            background-color: transparent;
+            color: #555;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 1em;
+            outline: none;
+            transition: color 0.3s;
+        }
+        .theme-toggle button:hover {
+            color: #006400;
+        }
+        body.dark-mode .theme-toggle button {
+            color: #eee;
+        }
+        body.dark-mode .theme-toggle button:hover {
+            color: #a7d129;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column; /* Changed to column for stacking */
+            gap: 15px;
+            width: 100%;
+            max-width: 800px; /* Made it more compact */
+            justify-content: center;
+            padding: 20px;
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            transition: background 0.3s, box-shadow 0.3s;
+            position: relative; /* For absolute positioning of the toggle button */
+        }
+        .panel {
+            flex: none; /* Changed to none */
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            /* min-width: 450px; Removed for a more compact look */
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, box-shadow 0.3s, color 0.3s;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: #006400; /* Deep Green color */
+            font-size: 1.3em;
+            font-weight: bold;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #90caf9;
+            transition: color 0.3s, border-bottom 0.3s;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .input-grid.two-col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .input-grid.vlan-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .input-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+            color: #555;
+            transition: color 0.3s;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85em;
+            box-sizing: border-box;
+            background-color: #e6e6e6;
+            font-family: "Trebuchet MS", sans-serif;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 4px rgba(33, 150, 243, 0.3);
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .button-group button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, color 0.3s, box-shadow 0.3s;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        #generate-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+        #generate-btn:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+        }
+        #clear-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        #clear-btn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-1px);
+        }
+        .output-panel {
+            background-color: #e3f2fd;
+            position: relative;
+            margin-top: 15px; /* Added margin to separate panels */
+            transition: background 0.3s, box-shadow 0.3s, color 0.3s;
+        }
+        #output-script {
+            background-color: #e6e6e6;
+            color: #333;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 150px; /* Reduced min-height */
+            font-size: 0.8em;
+            line-height: 1.3;
+            border: 1px solid #bbdefb;
+            font-family: "Trebuchet MS", sans-serif;
+            font-weight: bold;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .output-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        #copy-btn {
+            background-color: #2196f3;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-weight: bold;
+        }
+        #copy-btn:hover {
+            background-color: #1e88e5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>ONU ADD SCRIPT</h1>
+
+<div class="main-container">
+    <div class="theme-toggle">
+        <button onclick="toggleDarkMode()">
+            <span class="material-icons">brightness_4</span>
+        </button>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <span class="material-icons">settings_input_component</span> Inputs
+        </div>
+
+        <div class="input-grid two-col">
+            <div class="input-group">
+                <label for="olt-type">OLT Type</label>
+                <select id="olt-type">
+                    <option value="vsol-gpon">V-SOL GPON</option>
+                    <option value="cdata-gpon-16">C-Data GPON 16-PON</option>
+                    <option value="cdata-gpon-8">C-Data GPON 8-PON</option>
+                    <option value="utstarcom">UTStarcom</option>
+                    <option value="fh-net">FH-NET</option>
+                    <option value="phyhome">Phyhome</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="onu-ports">ONU Ports</label>
+                <select id="onu-ports">
+                    <option value="1">1-Port</option>
+                    <option value="4">4-Ports</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-grid" style="margin-top: 8px;">
+            <div class="input-group">
+                <label for="slot">Slot</label>
+                <input type="number" id="slot" value="0">
+            </div>
+            <div class="input-group">
+                <label for="pon">PON</label>
+                <input type="number" id="pon" value="10">
+            </div>
+            <div class="input-group">
+                <label for="onu-id">ONU ID</label>
+                <input type="number" id="onu-id" value="15">
+            </div>
+        </div>
+
+        <div class="input-grid two-col" style="margin-top: 8px;">
+            <div class="input-group">
+                <label for="onu-mac">ONU MAC Address</label>
+                <input type="text" id="onu-mac" value="12312121">
+            </div>
+            <div class="input-group">
+                <label for="line-profile">Line Profile ID</label>
+                <input type="number" id="line-profile" value="529">
+            </div>
+        </div>
+
+        <div class="input-grid two-col" style="margin-top: 8px;">
+            <div class="input-group">
+                <label for="gem-id">GEM ID (C-Data only)</label>
+                <input type="number" id="gem-id" value="1">
+            </div>
+            <div class="input-group">
+                <label for="bandwidth">Bandwidth Rate (Mbps)</label>
+                <select id="bandwidth">
+                    <option value="60">60/60</option>
+                    <option value="100">100/100</option>
+                    <option value="160">160/160</option>
+                    <option value="210">210/210</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="input-group full-width" style="margin-top: 8px;">
+            <label>VLAN IDs</label>
+            <div class="input-grid vlan-grid">
+                <input type="text" id="vlan1" placeholder="VLAN 1" value="12">
+                <input type="text" id="vlan2" placeholder="VLAN 2">
+                <input type="text" id="vlan3" placeholder="VLAN 3">
+                <input type="text" id="vlan4" placeholder="VLAN 4">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="generate-btn" onclick="generateScript()">GENERATE</button>
+            <button id="clear-btn" onclick="clearForm()">CLEAR</button>
+        </div>
+    </div>
+
+    <div class="panel output-panel" id="output-panel">
+        <div class="panel-header">
+            <span class="material-icons">code</span> Generated Script
+        </div>
+        <pre id="output-script"></pre>
+        <div class="output-buttons">
+            <button id="copy-btn" onclick="copyToClipboard()">COPY</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let darkMode = localStorage.getItem('darkMode') === 'enabled';
+    if (darkMode) {
+        document.body.classList.add('dark-mode');
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        darkMode = !darkMode;
+        localStorage.setItem('darkMode', darkMode ? 'enabled' : 'disabled');
+    }
+
+    function generateScript() {
+        const oltType = document.getElementById('olt-type').value;
+        const slot = document.getElementById('slot').value;
+        const pon = document.getElementById('pon').value;
+        const onuId = document.getElementById('onu-id').value;
+        const onuPorts = parseInt(document.getElementById('onu-ports').value, 10);
+        const onuMac = document.getElementById('onu-mac').value;
+        const lineProfile = document.getElementById('line-profile').value;
+        const bandwidth = document.getElementById('bandwidth').value;
+        const gemId = document.getElementById('gem-id').value || '1';
+        const vlanList = [
+            document.getElementById('vlan1').value.trim(),
+            document.getElementById('vlan2').value.trim(),
+            document.getElementById('vlan3').value.trim(),
+            document.getElementById('vlan4').value.trim()
+        ].filter(v => v !== '');
+
+        let script = '';
+        let srvProfileId = '';
+
+        if (oltType.startsWith('cdata-gpon')) {
+            srvProfileId = onuPorts === 4 ? '1' : '4';
+        }
+
+        switch (oltType) {
+            case 'vsol-gpon':
+                script += `onu add ${pon} profile ${onuPorts}_port_onu sn ${onuMac}\n`;
+                script += `onu ${pon} profile line id ${lineProfile}\n`;
+                
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `onu ${pon} portvlan eth ${i} mode tag vlan ${vlanList[(i - 1)]} pri 0\n`;
+                        script += `onu ${pon} eth ${i} loopdetect disable\n`;
+                    } else {
+                        script += `onu ${pon} eth ${i} state disable\n`;
+                    }
+                }
+                
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `onu ${pon} eth ${i} state enable\n`;
+                        script += `onu ${pon} eth ${i} upstream-rate-limit cir ${bandwidth * 1024} pir ${bandwidth * 1024}\n`;
+                        script += `onu ${pon} eth ${i} downstream-rate-limit cir ${bandwidth * 1024} pir ${bandwidth * 1024}\n`;
+                    }
+                }
+                script += `exit\n`;
+                break;
+
+            case 'cdata-gpon-16':
+                script += `ont add ${pon} ${onuId} sn-auth ${onuMac} ont-lineprofile-id ${lineProfile} ont-srvprofile-id ${srvProfileId}\n`;
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `ont port native-vlan ${pon} ${onuId} eth ${i} vlan ${vlanList[(i - 1)]}\n`;
+                        if (onuPorts > 1) {
+                             script += `ont port attribute ${pon} ${onuId} eth ${i} operational-state on\n`;
+                        }
+                    } else {
+                        script += `ont port attribute ${pon} ${onuId} eth ${i} operational-state off\n`;
+                    }
+                }
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `ont port car ${pon} ${onuId} eth ${i} inbound ${bandwidth} outbound ${bandwidth}\n`;
+                    }
+                }
+                script += `exit\n`;
+                for (let i = 1; i <= vlanList.length; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `service-port autoindex vlan ${vlanList[(i - 1)]} gpon 0/${pon} port ${slot} ont ${onuId} gemport ${gemId} multi-service user-vlan ${vlanList[(i - 1)]} tag-action transparent\n`;
+                    }
+                }
+                break;
+
+            case 'cdata-gpon-8':
+                script += `ont add ${pon} ${onuId} sn-auth ${onuMac} ont-lineprofile-id ${lineProfile} ont-srvprofile-id ${srvProfileId}\n`;
+                
+                for (let i = 1; i <= onuPorts; i++) {
+                    const vlan = vlanList[(i - 1)];
+                    if (vlan) {
+                        script += `ont port native-vlan ${pon} ${onuId} eth ${i} vlan ${vlan}\n`;
+                        script += `ont port attribute ${pon} ${onuId} eth ${i} operational-state on\n`;
+                    } else {
+                        script += `ont port attribute ${pon} ${onuId} eth ${i} operational-state off\n`;
+                    }
+                }
+                
+                for (let i = 1; i <= onuPorts; i++) {
+                    const vlan = vlanList[(i - 1)];
+                    if (vlan) {
+                        script += `ont port car ${pon} ${onuId} eth ${i} inbound ${bandwidth} outbound ${bandwidth}\n`;
+                    }
+                }
+                script += `exit\n`;
+                break;
+            case 'utstarcom':
+                const macFormatted = onuMac.length === 12 ? `${onuMac.substring(0,4)}-${onuMac.substring(4,12)}` : onuMac;
+                script += `interface epon-olt ${slot}/${pon}\n`;
+                script += `onu ${onuId}\n`;
+                script += `dba-sla mac ${macFormatted}\n`;
+                script += `dba-sla mac-limit 10\n`;
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `remote-mgmt eth ${i} admin enable\n`;
+                        script += `remote-mgmt eth ${i} vlan-mode tag ${vlanList[(i - 1)]} 8100\n`;
+                        script += `policing upstream pir-mark-no-drop\n`;
+                        script += `policing downstream pir-mark-no-drop\n`;
+                        script += `shaping conform-to-pir\n`;
+                        script += `dba-sla upstream maximum-bandwidth ${bandwidth * 1024} Kbps\n`;
+                        script += `dba-sla upstream max-burst 512 Kbps\n`;
+                        script += `dba-sla downstream maximum-bandwidth ${bandwidth * 1024} Kbps\n`;
+                        script += `dba-sla downstream max-burst 512 Kbps\n`;
+                    } else {
+                        script += `remote-mgmt eth ${i} admin disable\n`;
+                    }
+                }
+                script += `exit\nexit\nexit\nconfigure management\nsave\n`;
+                break;
+            case 'fh-net':
+                script += `onu ${slot}/${pon}/${onuId}\n`;
+                for (let i = 1; i <= onuPorts; i++) {
+                    script += `interface ethernet 0/${i}\n`;
+                    if (vlanList[(i - 1)]) {
+                        script += `no onu-shutdown\n`;
+                        script += `onu-vlan-mode tag vlan ${vlanList[(i - 1)]}\n`;
+                    } else {
+                        script += `onu-shutdown\n`;
+                    }
+                    script += `exit\n`;
+                }
+                script += `onu-bandwidth upstream fir 0 cir 0 pir ${bandwidth * 1024}\n`;
+                script += `onu-bandwidth downstream fir 0 cir 0 pir ${bandwidth * 1024}\n`;
+                script += `onu-bandwidth shaper pir\n`;
+                script += `exit\nexit\ncopy running-config startup-config\ny\n`;
+                break;
+            case 'phyhome':
+                script += `service\nconfigure\n`;
+                for (let i = 1; i <= onuPorts; i++) {
+                    if (vlanList[(i - 1)]) {
+                        script += `service number ${slot} ${pon} ${onuId} 1 ${i}\n`;
+                        script += `customer-vlan ${slot} ${pon} ${onuId} 1 ${i} tag 7 33024 ${vlanList[(i - 1)]}\n`;
+                        script += `apply fe-service-compress-pkt ${slot} ${pon} ${onuId}\n`;
+                    }
+                    script += `onu-port-attribute ${slot} ${pon} ${onuId} ${i} ${vlanList[(i - 1)] ? 'enable' : 'disable'}\n`;
+                }
+                for (let i = 1; i <= onuPorts; i++) {
+                    script += `port-policing-config ${slot} ${pon} ${onuId} ${i} up-state enable up-parameters 99999 16384 1024 down-state enable down-parameters 99999 30720\n`;
+                }
+                script += `exit\nsystem\nconfigure\n`;
+                for (let i = 1; i <= onuPorts; i++) {
+                    script += `max-mac-counter ${slot} ${pon} ${onuId} ${i} 10\n`;
+                }
+                script += `exit\nexit\nsave\n`;
+                break;
+        }
+
+        document.getElementById('output-script').innerText = script;
+    }
+
+    function clearForm() {
+        document.getElementById('olt-type').value = 'cdata-gpon-8';
+        document.getElementById('onu-ports').value = '1';
+        document.getElementById('slot').value = '0';
+        document.getElementById('pon').value = '59';
+        document.getElementById('onu-id').value = '21';
+        document.getElementById('onu-mac').value = 'E067B3669265';
+        document.getElementById('line-profile').value = '510';
+        document.getElementById('gem-id').value = '1';
+        document.getElementById('bandwidth').value = '100';
+        document.getElementById('vlan1').value = '813';
+        document.getElementById('vlan2').value = '';
+        document.getElementById('vlan3').value = '';
+        document.getElementById('vlan4').value = '';
+        document.getElementById('output-script').innerText = '';
+    }
+
+    function copyToClipboard() {
+        const outputText = document.getElementById('output-script').innerText;
+        navigator.clipboard.writeText(outputText).then(() => {
+            alert('Script copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', generateScript);
+</script>
+
+</body>
+</html>
